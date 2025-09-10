@@ -1,0 +1,127 @@
+/* ===========================
+   Customers Page Styling
+   =========================== */
+
+.customers-page {
+  padding: 20px;
+  background-color: #f9fafc;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---------- Header ---------- */
+.customers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  min-width: 220px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Card ---------- */
+.customers-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Table ---------- */
+.customers-table {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.name-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #2c3e50;
+}
+
+.sub-email {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* Actions */
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.actions-cell oj-button {
+  font-size: 0.85rem;
+}
+
+/* ---------- Pagination ---------- */
+.customers-paging {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- Dialog ---------- */
+.customer-dialog {
+  width: 420px;
+  max-width: 95%;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

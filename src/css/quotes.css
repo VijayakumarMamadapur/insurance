@@ -1,0 +1,15 @@
+.oj-flex {
+  padding: 10px;
+}
+
+.actions-container oj-button {
+  margin-right: 5px;
+}
+
+.oj-messages {
+  margin-bottom: 15px;
+}
+
+oj-table {
+  margin-top: 15px;
+}

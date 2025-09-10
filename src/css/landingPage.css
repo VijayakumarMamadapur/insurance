@@ -1,0 +1,31 @@
+/* .landing-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f4f6f8;
+}
+
+.landing-content {
+  text-align: center;
+  background: #fff;
+  padding: 50px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-width: 500px;
+}
+
+.landing-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.landing-content p {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  color: #555;
+}
+
+.landing-buttons oj-button {
+  margin: 10px;
+} */
