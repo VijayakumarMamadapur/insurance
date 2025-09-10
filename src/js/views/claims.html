@@ -1,0 +1,85 @@
+
+<div class="claims-page oj-flex oj-sm-flex-direction-column">
+  <!-- Header -->
+  <div class="claims-header oj-flex oj-sm-flex-items-pad oj-sm-align-items-center">
+    <h2 class="page-title">Claims</h2>
+    <oj-button on-oj-action="[[openNewClaimDialog]]">File Claim</oj-button>
+  </div>
+
+  <!-- Messages -->
+  <oj-messages messages="[[messages]]"></oj-messages>
+
+  <!-- Claims Table -->
+  <oj-table
+    data="[[claimsDP]]"
+    selection-mode='{"row": "single"}'
+    columns='[
+      {"headerText": "Claim #", "field": "claimNumber"},
+      {"headerText": "Policy ID", "field": "policyId"},
+      {"headerText": "Loss Date", "field": "lossDate"},
+      {"headerText": "Description", "field": "description"},
+      {"headerText": "Status", "field": "status"},
+      {"headerText": "Approved Amount", "field": "approvedAmount"},
+      {"headerText": "Reason", "field": "decisionReason"},
+      {"headerText": "Actions", "template": "actionTemplate"}
+    ]'>
+    <template slot="actionTemplate" data-oj-as="row">
+      <oj-button chroming="outlined" size="sm"
+                 on-oj-action="[[() => $parent.openUpdateDialog(row.data)]]">
+        Update
+      </oj-button>
+      <oj-button chroming="outlined" size="sm"
+                 on-oj-action="[[() => $parent.openAssessDialog(row.data)]]">
+        Assess
+      </oj-button>
+      <oj-button chroming="outlined" size="sm"
+                 on-oj-action="[[() => $parent.closeClaim(row.data)]]">
+        Close
+      </oj-button>
+    </template>
+  </oj-table>
+
+  <!-- File Claim Dialog -->
+  <oj-dialog id="newClaimDialog" dialog-title="File New Claim" cancel-behavior="icon">
+    <div slot="body">
+      <oj-form-layout>
+        <oj-input-text label-hint="Policy ID" value="{{newClaim.policyId}}"></oj-input-text>
+        <oj-input-text label-hint="Description" value="{{newClaim.description}}"></oj-input-text>
+        <oj-input-date label-hint="Loss Date" value="{{newClaim.lossDate}}"></oj-input-date>
+      </oj-form-layout>
+    </div>
+    <div slot="footer">
+      <oj-button on-oj-action="[[fileClaim]]">Submit</oj-button>
+      <oj-button on-oj-action="[[closeNewClaimDialog]]">Cancel</oj-button>
+    </div>
+  </oj-dialog>
+
+  <!-- Update Claim Dialog -->
+  <oj-dialog id="updateClaimDialog" dialog-title="Update Claim" cancel-behavior="icon">
+    <div slot="body">
+      <oj-form-layout>
+        <oj-input-text label-hint="Description" value="{{selectedClaim.description}}"></oj-input-text>
+        <oj-input-date label-hint="Loss Date" value="{{selectedClaim.lossDate}}"></oj-input-date>
+      </oj-form-layout>
+    </div>
+    <div slot="footer">
+      <oj-button on-oj-action="[[updateClaim]]">Update</oj-button>
+      <oj-button on-oj-action="[[closeUpdateDialog]]">Cancel</oj-button>
+    </div>
+  </oj-dialog>
+
+  <!-- Assess Claim Dialog -->
+  <oj-dialog id="assessClaimDialog" dialog-title="Assess Claim" cancel-behavior="icon">
+    <div slot="body">
+      <oj-form-layout>
+        <oj-input-text label-hint="Decision" value="{{assessData.decision}}"></oj-input-text>
+        <oj-input-number label-hint="Approved Amount" value="{{assessData.approvedAmount}}"></oj-input-number>
+        <oj-input-text label-hint="Reason" value="{{assessData.reason}}"></oj-input-text>
+      </oj-form-layout>
+    </div>
+    <div slot="footer">
+      <oj-button on-oj-action="[[assessClaim]]">Submit</oj-button>
+      <oj-button on-oj-action="[[closeAssessDialog]]">Cancel</oj-button>
+    </div>
+  </oj-dialog>
+</div>

@@ -25,13 +25,13 @@ define([
     self.filterCustomerId = ko.observable();
     self.filterStatus = ko.observable();
 
-    // simple nested objects (kept for backward compatibility)
-    self.newQuote = ko.observable({
-      customerId: null,
-      productId: null,
-      sumAssured: '',
-      termMonths: ''
-    });
+    self.newQuote = {
+      customerId: ko.observable(null),
+      productId: ko.observable(null),
+      sumAssured: ko.observable(''),
+      termMonths: ko.observable('')
+    };
+
 
     self.editQuote = ko.observable({
       id: null,
@@ -41,6 +41,32 @@ define([
       termMonths: '',
       status: ''
     });
+    self.createQuote = () => {
+  const body = {
+    customerId: self.newQuote.customerId(),
+    productId: self.newQuote.productId(),
+    sumAssured: parseInt(self.newQuote.sumAssured() || 0, 10),
+    termMonths: parseInt(self.newQuote.termMonths() || 0, 10),
+    status: "DRAFT"
+  };
+
+  api.quotes.create(body)
+    .then(() => self.loadQuotes())
+    .then(() => {
+      const dlg = document.getElementById("createQuoteDialog");
+      if (dlg) dlg.close();
+      self.showMessage("confirmation", "Quote created successfully");
+      // reset newQuote fields
+      self.newQuote.customerId(null);
+      self.newQuote.productId(null);
+      self.newQuote.sumAssured('');
+      self.newQuote.termMonths('');
+    })
+    .catch(err => {
+      self.showMessage("error", "Failed to create quote: " + (err.message || err));
+    });
+};
+
 
     self.statuses = [
       { value: "DRAFT", label: "Draft" },
@@ -56,7 +82,6 @@ define([
 
     // ---------------- Message Helper ----------------
     self.showMessage = (severity, detail) => {
-      // severity: "confirmation", "error", "warning", "info"
       self.messages.push({
         severity,
         summary: severity.toUpperCase(),
@@ -65,14 +90,13 @@ define([
       });
     };
 
-    // ---------------- Selected Quote helper ----------------
+    // ---------------- Selected Quote Helper ----------------
     self.selectedQuote = ko.pureComputed(() => {
       const row = self.selectedRow();
       if (!row || !row.rowKey) return null;
       return self.quotes().find(q => q.id === row.rowKey) || null;
     });
 
-    // ---------------- Row Selection for Edit Dialog ----------------
     self.selectedRow.subscribe(row => {
       if (row && row.rowKey) {
         const quote = self.quotes().find(q => q.id === row.rowKey);
@@ -92,38 +116,21 @@ define([
     });
 
     // ---------------- Load Data ----------------
-    // IMPORTANT: return the Promise so callers can await it
-    self.loadQuotes = () => {
-      return api.quotes.getAll(self.filterCustomerId(), self.filterStatus())
+    self.loadQuotes = (customerId, status) => {
+      return api.quotes.getAll(customerId || null, status || null)
         .then(data => {
-          const mapped = (data || []).map(q => {
-            const customer = q.customer || {};
-            const product = q.product || {};
-            return {
-              ...q,
-              customer: {
-                ...customer,
-                fullName: (customer.firstName || "") + (customer.lastName ? (" " + customer.lastName) : ""),
-                id: customer.id
-              },
-              product: {
-                ...product,
-                name: product.name || "",
-                id: product.id
-              },
-              // keep exact backend field name "premiumCached"
-              premiumCached: q.premiumCached != null ? q.premiumCached : (q.premium != null ? q.premium : null),
-              pricingSource: q.pricingSource || null
-            };
-          });
+          const mapped = (data || []).map(q => ({
+            ...q,
+            customer: { ...q.customer, fullName: (q.customer.firstName || "") + " " + (q.customer.lastName || ""), id: q.customer.id },
+            product: { ...q.product, name: q.product.name || "", id: q.product.id },
+            premiumCached: q.premiumCached != null ? q.premiumCached : q.premium || null,
+            selected: ko.observable(false)
+          }));
           self.quotes(mapped);
           return mapped;
         })
         .catch(err => {
-          const msg = (err && err.message) ? err.message : err;
-          self.showMessage("error", "Failed to load quotes: " + msg);
-          // rethrow so await callers can catch
-          throw err;
+          self.showMessage("error", "Failed to load quotes: " + (err.message || err));
         });
     };
 
@@ -132,199 +139,82 @@ define([
         .then(data => {
           const mapped = (data || []).map(c => ({
             ...c,
-            fullName: (c.firstName || "") + (c.lastName ? (" " + c.lastName) : ""),
+            fullName: (c.firstName || "") + " " + (c.lastName || ""),
             id: c.id
           }));
           self.customers(mapped);
-          return mapped;
-        })
-        .catch(err => {
-          self.showMessage("error", "Failed to load customers");
-          throw err;
         });
     };
 
     self.loadProducts = () => {
       return api.products.getAll(true)
-        .then(data => {
-          self.products(data || []);
-          return data || [];
-        })
-        .catch(err => {
-          self.showMessage("error", "Failed to load products");
-          throw err;
-        });
+        .then(data => self.products(data || []));
     };
 
-    // ---------------- Actions ----------------
-    self.createQuote = () => {
-      const q = self.newQuote();
-      const body = {
-        customerId: q.customerId,
-        productId: q.productId,
-        sumAssured: parseInt(q.sumAssured || 0, 10),
-        termMonths: parseInt(q.termMonths || 0, 10),
-        status: "DRAFT"
-      };
-      api.quotes.create(body)
-        .then(() => {
-          return self.loadQuotes();
-        })
-        .then(() => {
-          const dlg = document.getElementById("createQuoteDialog");
-          if (dlg) dlg.close();
-          self.showMessage("confirmation", "Quote created successfully");
-          self.newQuote({
-            customerId: null,
-            productId: null,
-            sumAssured: '',
-            termMonths: ''
-          });
-        })
-        .catch(err => {
-          const msg = (err && err.message) ? err.message : err;
-          self.showMessage("error", "Failed to create quote: " + msg);
-        });
+    // ---------------- Filter Action ----------------
+    self.applyFilter = () => {
+      if (self.filterCustomerId()) {
+        self.loadQuotes(self.filterCustomerId(), null);
+      } else if (self.filterStatus()) {
+        self.loadQuotes(null, self.filterStatus());
+      } else {
+        self.loadQuotes();
+      }
     };
 
-    self.saveUpdatedQuote = () => {
-      const q = self.editQuote();
-      const body = {
-        customerId: q.customerId,
-        productId: q.productId,
-        sumAssured: parseInt(q.sumAssured || 0, 10),
-        termMonths: parseInt(q.termMonths || 0, 10),
-        status: q.status
-      };
-      api.quotes.update(q.id, body)
-        .then(() => self.loadQuotes())
-        .then(() => {
-          const dlg = document.getElementById("updateQuoteDialog");
-          if (dlg) dlg.close();
-          self.showMessage("confirmation", "Quote updated successfully");
-        })
-        .catch(err => {
-          const msg = (err && err.message) ? err.message : err;
-          self.showMessage("error", "Failed to update quote: " + msg);
-        });
+    // ---------------- Row Actions ----------------
+    self.getCheckedRows = () => self.quotes().filter(q => q.selected());
+
+    self.priceCheckedRows = () => {
+      const rows = self.getCheckedRows();
+      if (!rows.length) { self.showMessage("error", "Select at least one quote"); return; }
+      rows.forEach(row => self.priceRow(row));
     };
 
-    // Price a specific quote object (per-row)
+    self.confirmCheckedRows = async () => {
+      const rows = self.getCheckedRows();
+      if (!rows.length) { self.showMessage("error", "Select at least one quote"); return; }
+      for (let row of rows) await self.confirmRow(row);
+    };
+
     self.priceRow = async (quote) => {
-      if (!quote || !quote.id) {
-        self.showMessage("error", "Invalid quote for pricing");
-        return;
-      }
+      if (!quote || !quote.id) return self.showMessage("error", "Invalid quote for pricing");
       try {
-        const res = await api.quotes.price(quote.id);
-        // wait for list refresh so UI shows updated premium
+        await api.quotes.price(quote.id);
         await self.loadQuotes();
-        const fresh = self.quotes().find(x => x.id === quote.id) || {};
-        // try to read premium from response first, otherwise from fresh list
-        const premium = (res && (res.premiumCached != null ? res.premiumCached : res.premium)) || fresh.premiumCached || null;
-        if (premium != null) {
-          self.showMessage("confirmation", `Quote priced — premium: ${premium}`);
-        } else {
-          self.showMessage("confirmation", `Quote priced`);
-        }
+        self.showMessage("confirmation", `Quote priced`);
       } catch (err) {
-        const msg = (err && err.message) ? err.message : err;
-        self.showMessage("error", "Failed to price quote: " + msg);
+        self.showMessage("error", "Failed to price quote: " + (err.message || err));
       }
     };
 
-    // Price selected row (button above table)
-    self.priceSelected = () => {
-      const q = self.selectedQuote();
-      if (!q) {
-        self.showMessage("error", "Please select a quote to price");
-        return;
-      }
-      self.priceRow(q);
-    };
-
-    // Confirm a specific row (per-row)
     self.confirmRow = async (quote) => {
-      if (!quote || !quote.id) {
-        self.showMessage("error", "Invalid quote for confirmation");
-        return;
-      }
+      if (!quote || !quote.id) return self.showMessage("error", "Invalid quote for confirmation");
       try {
-        // ensure we have premiumCached
-        // refresh the quote from server to be safe
+        await api.quotes.confirm(quote.id);
         await self.loadQuotes();
-        const fresh = self.quotes().find(x => x.id === quote.id) || quote;
-
-        if (fresh.premiumCached == null) {
-          // price automatically
-          self.showMessage("info", "Pricing quote before confirmation...");
-          await api.quotes.price(fresh.id);
-          await self.loadQuotes();
-        }
-
-        const after = self.quotes().find(x => x.id === quote.id);
-        if (!after || after.premiumCached == null) {
-          self.showMessage("error", "Premium not available. Cannot confirm quote.");
-          return;
-        }
-
-        // now confirm
-        const res = await api.quotes.confirm(after.id);
-        // try to extract policy id from response
-        let policyId = null;
-        if (res) {
-          policyId = res.id || res.policyId || (res.policy && res.policy.id) || null;
-        }
-
-        await self.loadQuotes();
-
-        if (policyId) {
-          self.showMessage("confirmation", `Quote confirmed — policy created (id: ${policyId})`);
-        } else {
-          self.showMessage("confirmation", `Quote confirmed — policy created`);
-        }
+        self.showMessage("confirmation", `Quote confirmed`);
       } catch (err) {
-        const msg = (err && err.message) ? err.message : err;
-        self.showMessage("error", "Failed to confirm quote: " + msg);
+        self.showMessage("error", "Failed to confirm quote: " + (err.message || err));
       }
     };
 
-    // Confirm selected row (button above table)
-    self.confirmSelected = async () => {
-      const q = self.selectedQuote();
-      if (!q) {
-        self.showMessage("error", "Please select a quote to confirm");
-        return;
-      }
-      await self.confirmRow(q);
-    };
-
-    // Optional: delete selected
     self.deleteSelected = () => {
       const q = self.selectedQuote();
-      if (!q) {
-        self.showMessage("error", "Please select a quote to delete");
-        return;
-      }
+      if (!q) return self.showMessage("error", "Please select a quote to delete");
       if (!confirm("Are you sure you want to delete this quote?")) return;
       if (api.quotes.remove) {
         api.quotes.remove(q.id)
           .then(() => self.loadQuotes())
           .then(() => self.showMessage("confirmation", "Quote deleted"))
-          .catch(err => {
-            const msg = (err && err.message) ? err.message : err;
-            self.showMessage("error", "Failed to delete quote: " + msg);
-          });
+          .catch(err => self.showMessage("error", "Failed to delete quote: " + (err.message || err)));
       } else {
         self.showMessage("error", "Delete API not implemented");
       }
     };
 
     // ---------------- Init ----------------
-    // chain the loads so UI fills predictably
-    Promise.all([self.loadCustomers(), self.loadProducts(), self.loadQuotes()])
-      .catch(() => { /* errors already reported via showMessage */ });
-
+    Promise.all([self.loadCustomers(), self.loadProducts(), self.loadQuotes()]);
   }
 
   return QuotesViewModel;

@@ -151,6 +151,70 @@ define([], function () {
         request(`${API.core}/quotes/${id}/confirm`, {
           method: 'POST'
         })
+    },
+    policies: {
+          getAll: (customerId, status) => {
+            let url = `${API.core}/policies`;
+            const params = [];
+            if (customerId) params.push(`customer_id=${customerId}`);
+            if (status) params.push(`status=${status}`);
+            if (params.length > 0) url += `?${params.join("&")}`;
+            return request(url);
+          },
+          get: (id) => request(`${API.core}/policies/${id}`)
+        },
+        claims: {
+      // List claims (supports filters: policyId, status)
+      getAll: (policyId, status) => {
+        let url = `${API.core}/claims`;
+        const params = [];
+        if (policyId) params.push(`policy_id=${policyId}`);
+        if (status) params.push(`status=${status}`);
+        if (params.length > 0) url += `?${params.join("&")}`;
+        return request(url);
+      },
+
+      // Get claim by id
+      get: (id) => request(`${API.core}/claims/${id}`),
+
+      // File a new claim
+      create: (data) =>
+        request(`${API.core}/claims`, {
+          method: "POST",
+          body: JSON.stringify({
+            policyId: data.policyId,
+            description: data.description,
+            lossDate: data.lossDate
+          })
+        }),
+
+      // Update an existing claim
+      update: (id, data) =>
+        request(`${API.core}/claims/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            description: data.description,
+            lossDate: data.lossDate
+          })
+        }),
+
+      // Assess a claim (approve/reject with reason + amount)
+      assess: (id, data) =>
+        request(`${API.core}/claims/${id}/assess`, {
+          method: "POST",
+          body: JSON.stringify({
+            decision: data.decision,
+            approvedAmount: data.approvedAmount,
+            reason: data.reason
+          })
+        }),
+
+      // Close a claim
+      close: (id) =>
+        request(`${API.core}/claims/${id}/close`, {
+          method: "POST"
+        })
     }
+
   };
 });

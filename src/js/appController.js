@@ -29,7 +29,9 @@ define(['knockout', 'ojs/ojcontext', 'ojs/ojmodule-element-utils', 'ojs/ojknocko
         { path: 'dashboard', detail: { label: 'Dashboard', iconClass: 'oj-ux-ico-bar-chart' } },
         { path: 'products', detail: { label: 'Products', iconClass: 'oj-ux-ico-products' } },
         { path: 'customers', detail: { label: 'Customers', iconClass: 'oj-ux-ico-contact-group' } },
-        { path: 'quotes', detail: { label: 'Quotes', iconClass: 'oj-ux-ico-document' } }
+        { path: 'quotes', detail: { label: 'Quotes', iconClass: 'oj-ux-ico-attachment' } },
+        { path: 'policies', detail: { label: 'Policies', iconClass: 'oj-ux-ico-briefcase' } },
+        { path: 'claims', detail: { label: 'Claims', iconClass: 'oj-ux-ico-warning' } },
       ];
       
       // Router setup
